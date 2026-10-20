@@ -1,0 +1,286 @@
+@page "/productos"
+@rendermode InteractiveServer
+
+<PageTitle>Productos</PageTitle>
+
+<h1>Productos</h1>
+
+@* Mensaje de error: solo se muestra cuando hay un error *@
+@if (mensajeError != "")
+{
+    <div class="alert alert-danger">@mensajeError</div>
+}
+
+@* ---------- Formulario ---------- *@
+<div class="row mb-3">
+    <label class="col-sm-2 col-form-label">Inventario</label>
+    <div class="col-sm-10">
+        <input type="number" class="form-control" @bind="inventario" />
+    </div>
+</div>
+
+<div class="row mb-3">
+    <label class="col-sm-2 col-form-label">Nombre</label>
+    <div class="col-sm-10">
+        <input type="text" class="form-control" @bind="nombre" />
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="me-2">Departamento</label>
+
+    <input type="radio" name="departamento" id="frutas"
+           checked="@(departamento == "Frutas")"
+           @onchange='() => SeleccionarDepartamento("Frutas")' />
+    <label for="frutas" class="me-3">Frutas</label>
+
+    <input type="radio" name="departamento" id="verduras"
+           checked="@(departamento == "Verduras")"
+           @onchange='() => SeleccionarDepartamento("Verduras")' />
+    <label for="verduras" class="me-3">Verduras</label>
+
+    <input type="radio" name="departamento" id="lacteos"
+           checked="@(departamento == "Lácteos")"
+           @onchange='() => SeleccionarDepartamento("Lácteos")' />
+    <label for="lacteos">Lácteos</label>
+</div>
+
+@* Botones: Guardar cuando se agrega, Actualizar/Cancelar cuando se edita *@
+<div class="mb-3">
+    @if (indiceEdicion == -1)
+    {
+        <button class="btn btn-primary" @onclick="Guardar">Guardar</button>
+    }
+    else
+    {
+        <button class="btn btn-primary" @onclick="Actualizar">Actualizar</button>
+        <button class="btn btn-danger" @onclick="Cancelar">Cancelar</button>
+    }
+</div>
+
+@* Botón que cambia entre Listado y Existencias *@
+<div class="mb-3">
+    @if (mostrarExistencias)
+    {
+        <button class="btn btn-secondary" @onclick="CambiarVista">Listado</button>
+    }
+    else
+    {
+        <button class="btn btn-secondary" @onclick="CambiarVista">Existencias</button>
+    }
+</div>
+
+@* ---------- Vista: Existencias o Listado ---------- *@
+@if (mostrarExistencias)
+{
+    <p class="text-muted">Existencias por departamento</p>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Frutas</th>
+                <th>Verduras</th>
+                <th>Lácteos</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@ContarDepartamento("Frutas")</td>
+                <td>@ContarDepartamento("Verduras")</td>
+                <td>@ContarDepartamento("Lácteos")</td>
+            </tr>
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">Listado de productos</p>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Inventario</th>
+                <th>Nombre</th>
+                <th>Departamento</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < inventarios.Count; i++)
+            {
+                int indice = i; // copia del índice para usarla en los botones
+                <tr>
+                    <td>@inventarios[indice]</td>
+                    <td>@nombres[indice]</td>
+                    <td>@departamentos[indice]</td>
+                    <td>
+                        <button class="btn btn-sm btn-link text-dark" title="Eliminar"
+                                disabled="@(indiceEdicion != -1)"
+                                @onclick="() => Eliminar(indice)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg>
+                        </button>
+                        <button class="btn btn-sm btn-link text-dark" title="Editar"
+                                disabled="@(indiceEdicion != -1)"
+                                @onclick="() => Editar(indice)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    // Datos del formulario
+    int inventario = 0;
+    string nombre = "";
+    string departamento = "";
+
+    // Estado del componente
+    string mensajeError = "";
+    int indiceEdicion = -1;          // -1 significa que no se está editando
+    bool mostrarExistencias = false; // false = Listado, true = Existencias
+
+    // Colecciones: cada producto ocupa la misma posición en las tres listas
+    List<int> inventarios = new List<int>();
+    List<string> nombres = new List<string>();
+    List<string> departamentos = new List<string>();
+
+    void SeleccionarDepartamento(string valor)
+    {
+        departamento = valor;
+    }
+
+    // Revisa que los datos del formulario sean correctos
+    bool DatosValidos()
+    {
+        if (inventario <= 0)
+        {
+            mensajeError = "El número de inventario debe ser un número entero positivo.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(nombre))
+        {
+            mensajeError = "El nombre del producto no puede estar vacío.";
+            return false;
+        }
+
+        if (departamento == "")
+        {
+            mensajeError = "Debe seleccionar un departamento.";
+            return false;
+        }
+
+        return true;
+    }
+
+    // Busca si el número de inventario ya existe.
+    // indiceIgnorar sirve para no compararse consigo mismo al editar.
+    bool InventarioRepetido(int indiceIgnorar)
+    {
+        for (int i = 0; i < inventarios.Count; i++)
+        {
+            if (i != indiceIgnorar && inventarios[i] == inventario)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void Guardar()
+    {
+        if (!DatosValidos())
+        {
+            return;
+        }
+
+        if (InventarioRepetido(-1))
+        {
+            mensajeError = "El número de inventario se encuentra registrado. Debe ser único.";
+            return;
+        }
+
+        inventarios.Add(inventario);
+        nombres.Add(nombre.Trim());
+        departamentos.Add(departamento);
+
+        mensajeError = "";
+        LimpiarFormulario();
+    }
+
+    void Editar(int indice)
+    {
+        indiceEdicion = indice;
+        inventario = inventarios[indice];
+        nombre = nombres[indice];
+        departamento = departamentos[indice];
+        mensajeError = "";
+    }
+
+    void Actualizar()
+    {
+        if (!DatosValidos())
+        {
+            return;
+        }
+
+        if (InventarioRepetido(indiceEdicion))
+        {
+            mensajeError = "El número de inventario se encuentra registrado. Debe ser único.";
+            return;
+        }
+
+        inventarios[indiceEdicion] = inventario;
+        nombres[indiceEdicion] = nombre.Trim();
+        departamentos[indiceEdicion] = departamento;
+
+        mensajeError = "";
+        LimpiarFormulario();
+    }
+
+    void Cancelar()
+    {
+        mensajeError = "";
+        LimpiarFormulario();
+    }
+
+    void Eliminar(int indice)
+    {
+        inventarios.RemoveAt(indice);
+        nombres.RemoveAt(indice);
+        departamentos.RemoveAt(indice);
+    }
+
+    void LimpiarFormulario()
+    {
+        inventario = 0;
+        nombre = "";
+        departamento = "";
+        indiceEdicion = -1;
+    }
+
+    void CambiarVista()
+    {
+        mostrarExistencias = !mostrarExistencias;
+    }
+
+    // Cuenta cuántos productos hay en un departamento
+    int ContarDepartamento(string nombreDepartamento)
+    {
+        int contador = 0;
+        foreach (string d in departamentos)
+        {
+            if (d == nombreDepartamento)
+            {
+                contador++;
+            }
+        }
+        return contador;
+    }
+}
